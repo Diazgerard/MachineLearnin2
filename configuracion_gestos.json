@@ -1,4 +1,9 @@
 {
-    "Mover cursor": "Señalando hacia arriba",
-    "Pegar (Ctrl+V)": "Paz y amor"
+    "Clic izquierdo": "Mano abierta",
+    "Clic derecho": "Puño cerrado",
+    "Copiar (Ctrl+C)": "Pulgar arriba",
+    "Cerrar Ventana": "Pellizco",
+    "Windows": "Paz y amor",
+    "Subir Volumen": "Señalando",
+    "Bajar Volumen": "Llamando"
 }

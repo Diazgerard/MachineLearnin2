@@ -1,4 +1,6 @@
 import sys
+import subprocess
+import os
 from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
@@ -44,6 +46,7 @@ class DropZone(QFrame):
         
     def mousePressEvent(self, event):
         if self.box.text():  # Solo si hay un gesto asignado
+            gesture_to_return = self.box.text()
             self.box.setText("")
             self.box.setStyleSheet("""
                 QLabel {
@@ -54,6 +57,11 @@ class DropZone(QFrame):
                     qproperty-alignment: AlignCenter;
                 }
             """)
+            
+            # Devolver el gesto a la lista disponible
+            main_window = self.get_main_window()
+            if main_window:
+                main_window.return_gesture_to_list(gesture_to_return)
         
     def dragEnterEvent(self, event):
         if event.mimeData().hasText():
@@ -82,6 +90,16 @@ class DropZone(QFrame):
     def dropEvent(self, event):
         if event.mimeData().hasText():
             gesture = event.mimeData().text()
+            
+            # Verificar si el gesto ya está asignado en otra zona
+            main_window = self.get_main_window()
+            if main_window and main_window.is_gesture_assigned(gesture, self):
+                return  # No permitir la asignación si ya está usado
+            
+            # Si había un gesto anterior, devolverlo a la lista
+            if self.box.text():
+                main_window.return_gesture_to_list(self.box.text())
+            
             self.box.setText(gesture)
             self.box.setStyleSheet("""
                 QLabel {
@@ -93,7 +111,21 @@ class DropZone(QFrame):
                     qproperty-alignment: AlignCenter;
                 }
             """)
+            
+            # Remover el gesto de la lista disponible
+            if main_window:
+                main_window.remove_gesture_from_list(gesture)
+            
             event.acceptProposedAction()
+    
+    def get_main_window(self):
+        # Buscar la ventana principal navegando por los padres
+        widget = self
+        while widget:
+            if isinstance(widget, MainWindow):
+                return widget
+            widget = widget.parent()
+        return None
 
 class DnDListWidget(QListWidget):
     def __init__(self, title: str, parent=None):
@@ -245,7 +277,6 @@ class MainWindow(QMainWindow):
         grid.setContentsMargins(10, 10, 10, 10)
         
         commands = [
-            "Mover cursor",
             "Clic izquierdo",
             "Clic derecho",
             "Copiar (Ctrl+C)",
@@ -259,7 +290,9 @@ class MainWindow(QMainWindow):
             "Bajar Volumen",
             "Silenciar",
             "Captura de Pantalla",
-            "Cerrar Sesion"
+            "Cerrar Sesion",
+            "Abrir Explorador de Archivos",
+            "Minimizar Ventana"
         ]
         
         # Calcular número óptimo de columnas basado en el número de comandos
@@ -277,32 +310,56 @@ class MainWindow(QMainWindow):
         scroll_area.setWidget(grid_widget)
         right_panel.addWidget(scroll_area)
 
-        right_panel.addLayout(grid)
         container.addLayout(right_panel)
 
-        # Botones de reinicio y guardar
+        # Botones de control
         btns = QHBoxLayout()
         root.addLayout(btns)
         
+        # Botón de iniciar programa
+        start_btn = QPushButton("🚀 Iniciar Control Gestual")
+        start_btn.clicked.connect(self.start_gesture_control)
+        start_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #27ae60;
+                border: 2px solid #2ecc71;
+                color: white;
+                font-weight: bold;
+                font-size: 14px;
+                padding: 12px 20px;
+                border-radius: 8px;
+            }
+            QPushButton:hover {
+                background-color: #2ecc71;
+                border-color: #58d68d;
+                transform: translateY(-2px);
+            }
+            QPushButton:pressed {
+                background-color: #229954;
+                transform: translateY(0px);
+            }
+        """)
+        btns.addWidget(start_btn)
+        
         # Botón de reinicio
-        reset_btn = QPushButton("Reiniciar todo")
+        reset_btn = QPushButton("🔄 Reiniciar todo")
         reset_btn.clicked.connect(self.reset)
         btns.addWidget(reset_btn)
         
         # Botón de guardar
-        save_btn = QPushButton("Guardar configuración")
+        save_btn = QPushButton("💾 Guardar configuración")
         save_btn.clicked.connect(self.save_configuration)
         save_btn.setStyleSheet("""
             QPushButton {
-                background-color: #2ecc71;
-                border: 2px solid #27ae60;
+                background-color: #3498db;
+                border: 2px solid #5dade2;
             }
             QPushButton:hover {
-                background-color: #27ae60;
-                border-color: #219a52;
+                background-color: #5dade2;
+                border-color: #85c1e9;
             }
             QPushButton:pressed {
-                background-color: #219a52;
+                background-color: #2980b9;
             }
         """)
         btns.addWidget(save_btn)
@@ -337,6 +394,55 @@ class MainWindow(QMainWindow):
 
         self.setMinimumSize(1200, 800)  # Aumentamos el tamaño de la ventana para el nuevo layout
 
+    def is_gesture_assigned(self, gesture, current_zone):
+        """Verificar si un gesto ya está asignado en otra zona"""
+        for zone in self.drop_zones:
+            if zone != current_zone and zone.box.text() == gesture:
+                return True
+        return False
+    
+    def remove_gesture_from_list(self, gesture):
+        """Remover un gesto de la lista de gestos disponibles"""
+        for i in range(self.left.count()):
+            item = self.left.item(i)
+            if item and item.text().startswith(gesture):
+                self.left.takeItem(i)
+                break
+    
+    def return_gesture_to_list(self, gesture):
+        """Devolver un gesto a la lista de gestos disponibles"""
+        # Encontrar el nombre completo del gesto
+        gesture_names = {
+            "✋": ("✋ Mano abierta", "Gesto de mano abierta"),
+            "✊": ("✊ Puño cerrado", "Gesto de puño cerrado"),
+            "👍": ("👍 Pulgar arriba", "Gesto de pulgar arriba"),
+            "👆": ("👆 Señalando", "Gesto señalando"),
+            "🤏": ("🤏 Pellizco", "Gesto de pellizco"),
+            "✌️": ("✌️ Paz y amor", "Gesto de paz y amor"),
+            "🤙": ("🤙 Llamando", "Gesto de llamada"),
+            "👉": ("👉 Señalando hacia la derecha", "Gesto señalando a la derecha"),
+            "👈": ("👈 Señalando hacia la izquierda", "Gesto señalando a la izquierda"),
+            "👇": ("👇 Señalando hacia abajo", "Gesto señalando abajo"),
+            "🫳": ("🫳 Palma Abajo", "Gesto de palma hacia abajo"),
+            "👌": ("👌 Ok", "Gesto de OK"),
+            "🤟": ("🤟 Cuernos", "Gesto de cuernos")
+        }
+        
+        if gesture in gesture_names:
+            full_text, tooltip = gesture_names[gesture]
+            # Verificar que no esté ya en la lista
+            for i in range(self.left.count()):
+                item = self.left.item(i)
+                if item and item.text().startswith(gesture):
+                    return  # Ya está en la lista
+            
+            # Agregar de vuelta a la lista
+            self.left.addItem(full_text)
+            # Agregar tooltip al último item agregado
+            last_item = self.left.item(self.left.count() - 1)
+            if last_item:
+                last_item.setToolTip(tooltip)
+
     def reset(self):
         self.left.clear()
         gestures = [
@@ -366,6 +472,8 @@ class MainWindow(QMainWindow):
     def clear_zones(self):
         # Esta función solo se usa para el reset completo
         for zone in self.drop_zones:
+            if zone.box.text():  # Si hay un gesto asignado, devolverlo a la lista
+                self.return_gesture_to_list(zone.box.text())
             zone.box.setText("")
             zone.box.setStyleSheet("""
                 QLabel {
@@ -393,13 +501,29 @@ class MainWindow(QMainWindow):
     def save_configuration(self):
         # Crear un diccionario con las asignaciones actuales
         config = {}
-        # Obtener el mapeo actual de emojis a nombres
-        emoji_to_name = self.get_gesture_names()
+        
+        # Mapeo de emojis a nombres completos de gestos
+        emoji_to_gesture_name = {
+            "✋": "Mano abierta",
+            "✊": "Puño cerrado", 
+            "👍": "Pulgar arriba",
+            "👆": "Señalando",
+            "🤏": "Pellizco",
+            "✌️": "Paz y amor",
+            "🤙": "Llamando",
+            "👉": "Señalando hacia la derecha",
+            "👈": "Señalando hacia la izquierda", 
+            "👇": "Señalando hacia abajo",
+            "🫳": "Palma Abajo",
+            "👌": "Ok",
+            "🤟": "Cuernos"
+        }
         
         for zone in self.drop_zones:
             gesture_emoji = zone.box.text()
             if gesture_emoji:  # Solo guardar si hay un gesto asignado
-                gesture_name = emoji_to_name.get(gesture_emoji, gesture_emoji)
+                # Convertir emoji a nombre del gesto
+                gesture_name = emoji_to_gesture_name.get(gesture_emoji, gesture_emoji)
                 config[zone.command] = gesture_name
         
         if not config:
@@ -439,6 +563,61 @@ class MainWindow(QMainWindow):
                     f"Error al guardar la configuración:\n{str(e)}",
                     QtWidgets.QMessageBox.StandardButton.Ok
                 )
+
+    def start_gesture_control(self):
+        """Iniciar el programa de control gestual"""
+        try:
+            # Obtener la ruta del directorio actual
+            current_dir = os.path.dirname(os.path.abspath(__file__))
+            program_path = os.path.join(current_dir, "program.py")
+            venv_path = os.path.join(current_dir, "venv_ml2", "Scripts", "python.exe")
+            
+            # Verificar si existe el entorno virtual
+            if os.path.exists(venv_path):
+                # Ejecutar con el entorno virtual
+                subprocess.Popen([venv_path, program_path], cwd=current_dir)
+                
+                # Mostrar mensaje de confirmación
+                QtWidgets.QMessageBox.information(
+                    self,
+                    "Control Gestual Iniciado",
+                    "🎥 El control gestual se ha iniciado correctamente.\n\n"
+                    "📋 Instrucciones:\n"
+                    "• Usa tu mano derecha frente a la cámara\n"
+                    "• Mueve la mano en el rectángulo azul para controlar el cursor\n"
+                    "• Baja el dedo índice para hacer clic\n"
+                    "• Presiona ESC para salir\n\n"
+                    "⚠️ Si no ves la ventana, revisa tu barra de tareas.",
+                    QtWidgets.QMessageBox.StandardButton.Ok
+                )
+            else:
+                # Ejecutar con Python del sistema
+                subprocess.Popen([sys.executable, program_path], cwd=current_dir)
+                
+                QtWidgets.QMessageBox.information(
+                    self,
+                    "Control Gestual Iniciado",
+                    "🎥 El control gestual se ha iniciado.\n\n"
+                    "📋 Instrucciones:\n"
+                    "• Usa tu mano derecha frente a la cámara\n"
+                    "• Mueve la mano en el rectángulo azul para controlar el cursor\n"
+                    "• Baja el dedo índice para hacer clic\n"
+                    "• Presiona ESC para salir\n\n"
+                    "⚠️ Si hay errores, usa el entorno virtual (venv_ml2).",
+                    QtWidgets.QMessageBox.StandardButton.Ok
+                )
+                
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(
+                self,
+                "Error al Iniciar",
+                f"❌ Error al iniciar el control gestual:\n\n{str(e)}\n\n"
+                "💡 Sugerencias:\n"
+                "• Verifica que program.py existe\n"
+                "• Asegúrate de que las dependencias estén instaladas\n"
+                "• Usa el entorno virtual (venv_ml2) si es necesario",
+                QtWidgets.QMessageBox.StandardButton.Ok
+            )
 
 def main():
     app = QApplication(sys.argv)
