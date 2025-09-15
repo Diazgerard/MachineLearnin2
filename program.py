@@ -85,8 +85,8 @@ def process_hand_left(hand_landmarks, frame, width, height, model):
     # Bounding box de la mano
     x_coords = [int(lm.x * width) for lm in hand_landmarks.landmark]
     y_coords = [int(lm.y * height) for lm in hand_landmarks.landmark]
-    x_min, x_max = max(min(x_coords)-30, 0), min(max(x_coords)+30, width)
-    y_min, y_max = max(min(y_coords)-30, 0), min(max(y_coords)+30, height)
+    x_min, x_max = max(min(x_coords)-20, 0), min(max(x_coords)+20, width)
+    y_min, y_max = max(min(y_coords)-20, 0), min(max(y_coords)+20, height)
 
     # Recorte y preprocesamiento
     hand_roi = frame[y_min:y_max, x_min:x_max]
