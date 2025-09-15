@@ -4,6 +4,10 @@ import numpy as np
 import pyautogui
 import win32gui
 import win32con
+import tensorflow as tf
+
+# --- Cargar modelo entrenado ---
+gesture_model = tf.keras.models.load_model('models/asl_alphabet_model.h5')
 
 # --- Configuración ---
 RECT_WIDTH = 160
@@ -49,7 +53,7 @@ def detect_finger_down(hand_landmarks, width, height, output):
 
 
 def process_hand_right(hand_landmarks, frame, width, height):
-    """Procesa la mano detectada y controla el mouse si es la derecha."""
+    """Controla el mouse si es la derecha."""
     output = frame.copy()
 
     # Rectángulo de control
@@ -72,6 +76,37 @@ def process_hand_right(hand_landmarks, frame, width, height):
     # Marcador en la mano
     cv2.circle(output, (x, y), 10, COLOR_MOUSE_POINTER, 3)
     cv2.circle(output, (x, y), 5, COLOR_MOUSE_POINTER, -1)
+
+    return output
+
+def process_hand_left(hand_landmarks, frame, width, height, model):
+    output = frame.copy()
+
+    # Bounding box de la mano
+    x_coords = [int(lm.x * width) for lm in hand_landmarks.landmark]
+    y_coords = [int(lm.y * height) for lm in hand_landmarks.landmark]
+    x_min, x_max = max(min(x_coords)-20, 0), min(max(x_coords)+20, width)
+    y_min, y_max = max(min(y_coords)-20, 0), min(max(y_coords)+20, height)
+
+    # Recorte y preprocesamiento
+    hand_roi = frame[y_min:y_max, x_min:x_max]
+    if hand_roi.size == 0:
+        return output  # si el ROI sale vacío
+
+    hand_resized = cv2.resize(hand_roi, (128, 128))
+    hand_array = hand_resized.astype("float32") / 255.0
+    hand_array = np.expand_dims(hand_array, axis=0)  # (1,128,128,3)
+
+    # Predicción
+    preds = model.predict(hand_array, verbose=0)
+    class_idx = np.argmax(preds)
+    pred_conf = preds[0][class_idx]
+
+    # Mostrar resultado en pantalla
+    cv2.rectangle(output, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
+    cv2.putText(output, f"{class_idx} ({pred_conf:.2f})",
+                (x_min, y_min - 10),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
     return output
 
@@ -109,11 +144,13 @@ def main():
                 for hand_landmarks, handedness in zip(results.multi_hand_landmarks, results.multi_handedness):
                     if handedness.classification[0].label == 'Right':
                         output = process_hand_right(hand_landmarks, frame, width, height)
+                    if handedness.classification[0].label == 'Left':
+                        output = process_hand_left(hand_landmarks, frame, width, height, gesture_model)
 
-            cv2.imshow('Hand Mouse Control', output)
-            cv2.moveWindow('Hand Mouse Control', 0, 0)
+            cv2.imshow('Hand Control', output)
+            cv2.moveWindow('Hand Control', 0, 0)
 
-            set_window_always_on_top('Hand Mouse Control')
+            set_window_always_on_top('Hand Control')
             
 
             if cv2.waitKey(1) & 0xFF == 27:

@@ -4,3 +4,4 @@ numpy
 mediapipe
 pyautogui
 pywin32
+tensorflow
