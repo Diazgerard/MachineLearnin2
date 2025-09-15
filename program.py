@@ -7,7 +7,7 @@ import win32con
 import tensorflow as tf
 
 # --- Cargar modelo entrenado ---
-gesture_model = tf.keras.models.load_model('models/asl_alphabet_model.h5')
+gesture_model = tf.keras.models.load_model('models/EfficientNetB5_gesture_classifier1.keras')
 
 # --- Configuración ---
 RECT_WIDTH = 160
@@ -85,8 +85,8 @@ def process_hand_left(hand_landmarks, frame, width, height, model):
     # Bounding box de la mano
     x_coords = [int(lm.x * width) for lm in hand_landmarks.landmark]
     y_coords = [int(lm.y * height) for lm in hand_landmarks.landmark]
-    x_min, x_max = max(min(x_coords)-20, 0), min(max(x_coords)+20, width)
-    y_min, y_max = max(min(y_coords)-20, 0), min(max(y_coords)+20, height)
+    x_min, x_max = max(min(x_coords)-30, 0), min(max(x_coords)+30, width)
+    y_min, y_max = max(min(y_coords)-30, 0), min(max(y_coords)+30, height)
 
     # Recorte y preprocesamiento
     hand_roi = frame[y_min:y_max, x_min:x_max]
@@ -94,13 +94,15 @@ def process_hand_left(hand_landmarks, frame, width, height, model):
         return output  # si el ROI sale vacío
 
     hand_resized = cv2.resize(hand_roi, (128, 128))
-    hand_array = hand_resized.astype("float32") / 255.0
+    hand_array = hand_resized.astype("float32")
     hand_array = np.expand_dims(hand_array, axis=0)  # (1,128,128,3)
 
     # Predicción
-    preds = model.predict(hand_array, verbose=0)
+    preds = model.predict(hand_array, verbose=1)
     class_idx = np.argmax(preds)
     pred_conf = preds[0][class_idx]
+
+    print(f"Predicción: {class_idx} con confianza {pred_conf:.2f}")
 
     # Mostrar resultado en pantalla
     cv2.rectangle(output, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
