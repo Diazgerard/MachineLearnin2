@@ -1,28 +1,187 @@
 {
-    "0": "copiar",
-    "1": "pegar",
-    "2": "cortar",
-    "3": "deshacer",
-    "4": "rehacer",
-    "5": "screenshot",
-    "6": "screenshot_portapapeles",
-    "7": "cambiar_ventana",
-    "8": "buscar",
-    "9": "nueva_pestana",
-    "10": "cerrar_pestana",
-    "11": "subir_volumen",
-    "12": "bajar_volumen",
-    "13": "silenciar",
-    "14": "abrir_bloc",
-    "15": "abrir_calculadora",
-    "16": "abrir_explorador",
-    "17": "escribir_texto",
-    "18": "refrescar",
-    "19": "borrar",
-    "20": "scroll_arriba",
-    "21": "scroll_abajo",
-    "22": "abrir_chrome",
-    "23": "abrir_excel",
-    "24": "bloquear_pantalla",
-    "25": "abrir_word"
+    "comandos": {
+        "0": "Copiar",
+        "1": "Pegar",
+        "2": "Desahacer",
+        "3": "Rehacer",
+        "4": "Screenshot",
+        "5": "Screenshot Portapeles",
+        "6": "Cambiar Ventana",
+        "7": "Buscar",
+        "8": "Nueva Pestaña",
+        "9": "Cerrar Pestaña",
+        "10": "Subir Volumen",
+        "11": "Bajar Volumen",
+        "12": "Silenciar",
+        "13": "Abrir Bloc",
+        "14": "Abrir Calculadora",
+        "15": "Abrir Explorador",
+        "16": "Escribir Texto",
+        "17": "Refrescar",
+        "18": "Borrar",
+        "19": "Scroll Arriba",
+        "20": "Scroll Abajo",
+        "21": "Abrir Chrome",
+        "22": "Abrir Excel",
+        "23": "Presionar ESC",
+        "24": "Abrir Word"
+    },
+    "detalles": {
+        "0": {
+            "letra": "A",
+            "numero": 0,
+            "comando": "Copiar",
+            "descripcion": "Seña 'A' (número 0) ejecuta: Copiar"
+        },
+        "1": {
+            "letra": "B",
+            "numero": 1,
+            "comando": "Pegar",
+            "descripcion": "Seña 'B' (número 1) ejecuta: Pegar"
+        },
+        "2": {
+            "letra": "C",
+            "numero": 2,
+            "comando": "Desahacer",
+            "descripcion": "Seña 'C' (número 2) ejecuta: Desahacer"
+        },
+        "3": {
+            "letra": "D",
+            "numero": 3,
+            "comando": "Rehacer",
+            "descripcion": "Seña 'D' (número 3) ejecuta: Rehacer"
+        },
+        "4": {
+            "letra": "E",
+            "numero": 4,
+            "comando": "Screenshot",
+            "descripcion": "Seña 'E' (número 4) ejecuta: Screenshot"
+        },
+        "5": {
+            "letra": "F",
+            "numero": 5,
+            "comando": "Screenshot Portapeles",
+            "descripcion": "Seña 'F' (número 5) ejecuta: Screenshot Portapeles"
+        },
+        "6": {
+            "letra": "G",
+            "numero": 6,
+            "comando": "Cambiar Ventana",
+            "descripcion": "Seña 'G' (número 6) ejecuta: Cambiar Ventana"
+        },
+        "7": {
+            "letra": "H",
+            "numero": 7,
+            "comando": "Buscar",
+            "descripcion": "Seña 'H' (número 7) ejecuta: Buscar"
+        },
+        "8": {
+            "letra": "I",
+            "numero": 8,
+            "comando": "Nueva Pestaña",
+            "descripcion": "Seña 'I' (número 8) ejecuta: Nueva Pestaña"
+        },
+        "9": {
+            "letra": "J",
+            "numero": 9,
+            "comando": "Cerrar Pestaña",
+            "descripcion": "Seña 'J' (número 9) ejecuta: Cerrar Pestaña"
+        },
+        "10": {
+            "letra": "K",
+            "numero": 10,
+            "comando": "Subir Volumen",
+            "descripcion": "Seña 'K' (número 10) ejecuta: Subir Volumen"
+        },
+        "11": {
+            "letra": "L",
+            "numero": 11,
+            "comando": "Bajar Volumen",
+            "descripcion": "Seña 'L' (número 11) ejecuta: Bajar Volumen"
+        },
+        "12": {
+            "letra": "M",
+            "numero": 12,
+            "comando": "Silenciar",
+            "descripcion": "Seña 'M' (número 12) ejecuta: Silenciar"
+        },
+        "13": {
+            "letra": "N",
+            "numero": 13,
+            "comando": "Abrir Bloc",
+            "descripcion": "Seña 'N' (número 13) ejecuta: Abrir Bloc"
+        },
+        "14": {
+            "letra": "O",
+            "numero": 14,
+            "comando": "Abrir Calculadora",
+            "descripcion": "Seña 'O' (número 14) ejecuta: Abrir Calculadora"
+        },
+        "15": {
+            "letra": "P",
+            "numero": 15,
+            "comando": "Abrir Explorador",
+            "descripcion": "Seña 'P' (número 15) ejecuta: Abrir Explorador"
+        },
+        "16": {
+            "letra": "Q",
+            "numero": 16,
+            "comando": "Escribir Texto",
+            "descripcion": "Seña 'Q' (número 16) ejecuta: Escribir Texto"
+        },
+        "17": {
+            "letra": "R",
+            "numero": 17,
+            "comando": "Refrescar",
+            "descripcion": "Seña 'R' (número 17) ejecuta: Refrescar"
+        },
+        "18": {
+            "letra": "S",
+            "numero": 18,
+            "comando": "Borrar",
+            "descripcion": "Seña 'S' (número 18) ejecuta: Borrar"
+        },
+        "19": {
+            "letra": "T",
+            "numero": 19,
+            "comando": "Scroll Arriba",
+            "descripcion": "Seña 'T' (número 19) ejecuta: Scroll Arriba"
+        },
+        "20": {
+            "letra": "U",
+            "numero": 20,
+            "comando": "Scroll Abajo",
+            "descripcion": "Seña 'U' (número 20) ejecuta: Scroll Abajo"
+        },
+        "21": {
+            "letra": "V",
+            "numero": 21,
+            "comando": "Abrir Chrome",
+            "descripcion": "Seña 'V' (número 21) ejecuta: Abrir Chrome"
+        },
+        "22": {
+            "letra": "W",
+            "numero": 22,
+            "comando": "Abrir Excel",
+            "descripcion": "Seña 'W' (número 22) ejecuta: Abrir Excel"
+        },
+        "23": {
+            "letra": "X",
+            "numero": 23,
+            "comando": "Presionar ESC",
+            "descripcion": "Seña 'X' (número 23) ejecuta: Presionar ESC"
+        },
+        "24": {
+            "letra": "Y",
+            "numero": 24,
+            "comando": "Abrir Word",
+            "descripcion": "Seña 'Y' (número 24) ejecuta: Abrir Word"
+        }
+    },
+    "info": {
+        "total_configurados": 25,
+        "formato": "letra A=0, B=1, C=2, ..., Z=25",
+        "fecha_creacion": "2025-09-16 01:18:33",
+        "instrucciones": "El programa lee la sección 'comandos' para ejecutar los gestos"
+    }
 }
