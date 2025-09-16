@@ -4,4 +4,7 @@ numpy
 mediapipe
 pyautogui
 pywin32
-tensorflow
+tensorflow==2.19.0
+keras==3.10.0
+scikit-learn
+keyboard
