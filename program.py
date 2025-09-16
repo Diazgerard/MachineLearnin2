@@ -93,20 +93,34 @@ def process_hand_left(hand_landmarks, frame, width, height, model):
     if hand_roi.size == 0:
         return output  # si el ROI sale vacío
 
+    # Si no hay modelo disponible, solo mostrar el bounding box
+    if model is None:
+        cv2.rectangle(output, (x_min, y_min), (x_max, y_max), (0, 255, 255), 2)
+        cv2.putText(output, "Modelo no disponible",
+                    (x_min, y_min - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 255), 2)
+        return output
+
     hand_resized = cv2.resize(hand_roi, (128, 128))
     hand_array = hand_resized.astype("float32") / 255.0
     hand_array = np.expand_dims(hand_array, axis=0)  # (1,128,128,3)
 
     # Predicción
-    preds = model.predict(hand_array, verbose=0)
-    class_idx = np.argmax(preds)
-    pred_conf = preds[0][class_idx]
+    try:
+        preds = model.predict(hand_array, verbose=0)
+        class_idx = np.argmax(preds)
+        pred_conf = preds[0][class_idx]
 
-    # Mostrar resultado en pantalla
-    cv2.rectangle(output, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
-    cv2.putText(output, f"{class_idx} ({pred_conf:.2f})",
-                (x_min, y_min - 10),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+        # Mostrar resultado en pantalla
+        cv2.rectangle(output, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
+        cv2.putText(output, f"{class_idx} ({pred_conf:.2f})",
+                    (x_min, y_min - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+    except Exception as e:
+        cv2.rectangle(output, (x_min, y_min), (x_max, y_max), (0, 0, 255), 2)
+        cv2.putText(output, f"Error: {str(e)[:20]}",
+                    (x_min, y_min - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
 
     return output
 
