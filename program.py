@@ -36,7 +36,7 @@ actions = {
     "scroll_abajo": lambda: pyautogui.scroll(-500),            # 21
     "abrir_chrome": lambda: os.system("start chrome"),         # 22
     "abrir_excel": lambda: os.system("start excel"),           # 23
-    "bloquear_pantalla": lambda: keyboard.send("win+l"),       # 24
+    "bloquear_pantalla": lambda: pyautogui.hotkey('win', 'l'),       # 24
     "abrir_word": lambda: os.system("start winword")           # 25
 }
 
@@ -45,7 +45,7 @@ with open("configuracion_gestos.json", "r") as f:
     config = json.load(f)
 
 # --- Cargar modelo entrenado ---
-gesture_model = tf.keras.models.load_model('models/EfficientNetB5_gesture_classifier1.keras')
+gesture_model = tf.keras.models.load_model('models/EfficientNetB5_gesture_classifier.keras')
 
 # --- Configuración ---
 RECT_WIDTH = 160
@@ -55,7 +55,7 @@ COLOR_MOUSE_POINTER = (255, 0, 255)
 mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
 
-EXEC_COOLDOWN = 4.0
+EXEC_COOLDOWN = 5.0
 
 # --- Funciones auxiliares ---
 def calculate_distance(x1, y1, x2, y2):

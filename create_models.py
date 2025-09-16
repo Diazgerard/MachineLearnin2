@@ -39,7 +39,7 @@ num_classes = len(class_names)
 
 
 # ==========================
-# 2. Función para construir modelos
+# 2. Función para construir modelos 
 # ==========================
 def build_model(base_model, num_classes):
     model = Sequential([
@@ -61,9 +61,36 @@ def build_model(base_model, num_classes):
 # ==========================
 # 3. Función de entrenamiento y evaluación
 # ==========================
-def train_and_evaluate(model, name, train_ds, val_ds, test_ds, class_names):
+def train_and_evaluate(
+    model: tf.keras.Model,
+    name: str,
+    train_ds: tf.data.Dataset,
+    val_ds: tf.data.Dataset,
+    test_ds: tf.data.Dataset,
+    class_names: list[str]
+) -> None:
+    """
+    Entrena y evalúa un modelo de clasificación de imágenes.
+
+    Args:
+        model (tf.keras.Model): Modelo a entrenar y evaluar.
+        name (str): Nombre identificador del modelo.
+        train_ds (tf.data.Dataset): Dataset de entrenamiento.
+        val_ds (tf.data.Dataset): Dataset de validación.
+        test_ds (tf.data.Dataset): Dataset de prueba.
+        class_names (list[str]): Lista de nombres de clases.
+
+    Returns:
+        None
+    """
+
     print(f"\nEntrenando {name}...")
-    history = model.fit(train_ds, epochs=2, validation_data=val_ds, verbose=1)
+    history = model.fit(
+        train_ds,
+        epochs=1,
+        validation_data=val_ds,
+        verbose=1
+    )
     print("Entrenamiento completado.")
 
     # Evaluación en test
@@ -76,7 +103,7 @@ def train_and_evaluate(model, name, train_ds, val_ds, test_ds, class_names):
     y_pred_classes = []
 
     for x_batch, y_batch in test_ds:
-        preds = model.predict(x_batch, verbose=0) 
+        preds = model.predict(x_batch, verbose=0)
         y_true.append(y_batch.numpy())
         y_pred_classes.append(np.argmax(preds, axis=1))
 
@@ -103,4 +130,3 @@ models_to_test = {
 # ==========================
 for name, base_model in models_to_test.items():
     model = build_model(base_model, num_classes)
-    train_and_evaluate(model, name, train_ds, val_ds, test_ds, class_names)
