@@ -227,7 +227,7 @@ def show_recommendation_panels():
         set_window_always_on_top('Recomendacion 2')
 
 # --- Cargar modelo entrenado ---
-gesture_model = tf.keras.models.load_model('models/asl_alphabet_model.h5')
+gesture_model = tf.keras.models.load_model('models/EfficientNetB5_gesture_classifier.keras')
 print("Modelo EfficientNetB5 cargado exitosamente")
 
 
