@@ -1,13 +1,51 @@
+import json
+import os
 import cv2
 import mediapipe as mp
 import numpy as np
 import pyautogui
 import win32gui
 import win32con
+import keyboard
+import time
 import tensorflow as tf
 
+# --- Configuración de las acciones del teclado ---
+actions = {
+    "copiar": lambda: keyboard.send("ctrl+c"),                 # 0
+    "pegar": lambda: keyboard.send("ctrl+v"),                  # 1
+    "cortar": lambda: keyboard.send("ctrl+x"),                 # 2
+    "deshacer": lambda: keyboard.send("ctrl+z"),               # 3
+    "rehacer": lambda: keyboard.send("ctrl+y"),                # 4
+    "screenshot": lambda: pyautogui.screenshot("screenshot.png"), # 5
+    "screenshot_portapapeles": lambda: keyboard.send("print screen"), # 6
+    "cambiar_ventana": lambda: keyboard.send("alt+tab"),       # 7
+    "buscar": lambda: keyboard.send("ctrl+f"),                 # 8
+    "nueva_pestana": lambda: keyboard.send("ctrl+t"),          # 9
+    "cerrar_pestana": lambda: keyboard.send("ctrl+w"),         # 10
+    "subir_volumen": lambda: keyboard.send("volume up"),       # 11
+    "bajar_volumen": lambda: keyboard.send("volume down"),     # 12
+    "silenciar": lambda: keyboard.send("volume mute"),         # 13
+    "abrir_bloc": lambda: os.system("notepad"),                # 14
+    "abrir_calculadora": lambda: os.system("calc"),            # 15
+    "abrir_explorador": lambda: os.system("explorer"),         # 16
+    "escribir_texto": lambda: pyautogui.typewrite("Hola desde IA!"), # 17
+    "refrescar": lambda: pyautogui.press("f5"),                # 18
+    "borrar": lambda: pyautogui.press("delete"),               # 19
+    "scroll_arriba": lambda: pyautogui.scroll(500),            # 20
+    "scroll_abajo": lambda: pyautogui.scroll(-500),            # 21
+    "abrir_chrome": lambda: os.system("start chrome"),         # 22
+    "abrir_excel": lambda: os.system("start excel"),           # 23
+    "bloquear_pantalla": lambda: pyautogui.hotkey('win', 'l'),       # 24
+    "abrir_word": lambda: os.system("start winword")           # 25
+}
+
+# --- Cargar configuración desde archivo JSON ----
+with open("configuracion_gestos.json", "r") as f:
+    config = json.load(f)
+
 # --- Cargar modelo entrenado ---
-gesture_model = tf.keras.models.load_model('models/asl_alphabet_model.h5')
+gesture_model = tf.keras.models.load_model('models/EfficientNetB5_gesture_classifier.keras')
 
 # --- Configuración ---
 RECT_WIDTH = 160
@@ -17,6 +55,7 @@ COLOR_MOUSE_POINTER = (255, 0, 255)
 mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
 
+EXEC_COOLDOWN = 5.0
 
 # --- Funciones auxiliares ---
 def calculate_distance(x1, y1, x2, y2):
@@ -94,13 +133,15 @@ def process_hand_left(hand_landmarks, frame, width, height, model):
         return output  # si el ROI sale vacío
 
     hand_resized = cv2.resize(hand_roi, (128, 128))
-    hand_array = hand_resized.astype("float32") / 255.0
+    hand_array = hand_resized.astype("float32")
     hand_array = np.expand_dims(hand_array, axis=0)  # (1,128,128,3)
 
     # Predicción
-    preds = model.predict(hand_array, verbose=0)
+    preds = model.predict(hand_array, verbose=1)
     class_idx = np.argmax(preds)
     pred_conf = preds[0][class_idx]
+
+    print(f"Predicción: {class_idx} con confianza {pred_conf:.2f}")
 
     # Mostrar resultado en pantalla
     cv2.rectangle(output, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
@@ -108,7 +149,7 @@ def process_hand_left(hand_landmarks, frame, width, height, model):
                 (x_min, y_min - 10),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
 
-    return output
+    return output, class_idx
 
 def set_window_always_on_top(window_title):
     """Establece la ventana con el título dado como siempre en la parte superior."""
@@ -118,10 +159,22 @@ def set_window_always_on_top(window_title):
                               win32con.SWP_NOMOVE | win32con.SWP_NOSIZE)
     else:
         print(f"No se encontró la ventana con el título: {window_title}")
-
+    
+def executive_command(class_id: int):
+    class_str = str(class_id)  # las claves del JSON son strings
+    if class_str in config:
+        action = config[class_str]
+        if action in actions:
+            print(f"Ejecutando acción '{action}' para clase {class_id}")
+            actions[action]()
+        else:
+            print(f"Acción '{action}' no está definida en acciones")
+    else:
+        print(f"No hay comando configurado para clase {class_id}")
 
 # --- Función principal ---
 def main():
+    last_exec_time = time.time()
     cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 420)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 340)
@@ -139,26 +192,30 @@ def main():
             # Procesar manos
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             results = hands.process(frame_rgb)
+            pred = None
 
             if results.multi_hand_landmarks:
                 for hand_landmarks, handedness in zip(results.multi_hand_landmarks, results.multi_handedness):
                     if handedness.classification[0].label == 'Right':
                         output = process_hand_right(hand_landmarks, frame, width, height)
                     if handedness.classification[0].label == 'Left':
-                        output = process_hand_left(hand_landmarks, frame, width, height, gesture_model)
+                        output, pred = process_hand_left(hand_landmarks, frame, width, height, gesture_model)
 
             cv2.imshow('Hand Control', output)
             cv2.moveWindow('Hand Control', 0, 0)
-
             set_window_always_on_top('Hand Control')
-            
+
+            if pred is not None:
+                now = time.time()
+                if now - last_exec_time > EXEC_COOLDOWN:
+                    executive_command(pred)
+                    last_exec_time = now  
 
             if cv2.waitKey(1) & 0xFF == 27:
                 break
 
     cap.release()
     cv2.destroyAllWindows()
-
 
 if __name__ == "__main__":
     main()
